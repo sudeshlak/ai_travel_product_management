@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getToken } from '@/service/localStorageService'
 
 export const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -9,6 +10,9 @@ export const client = axios.create({
 })
 
 client.interceptors.request.use((config) => {
-  // Attach auth headers here when auth is added.
+  const token = getToken()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
   return config
 })
