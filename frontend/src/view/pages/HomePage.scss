@@ -1,0 +1,12 @@
+@use '../../styles/variables' as *;
+
+.home-page {
+  h1 {
+    color: $text-heading;
+    margin-bottom: 0.5rem;
+  }
+
+  .lead {
+    color: $text;
+  }
+}

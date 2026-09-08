@@ -13,4 +13,13 @@ export default defineConfig({
       '@': path.resolve(rootDir, 'src'),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Bootstrap 5.3 still uses legacy Sass APIs; silence until Bootstrap migrates.
+        quietDeps: true,
+        silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'if-function'],
+      },
+    },
+  },
 })
