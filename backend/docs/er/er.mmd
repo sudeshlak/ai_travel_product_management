@@ -1,0 +1,47 @@
+erDiagram
+    direction TB
+
+    USER {
+        int id PK
+        string email UK
+        string password
+    }
+
+    CATEGORY {
+        int id PK
+        string name
+    }
+
+    PRODUCT {
+        int productId PK
+        string productName
+        string description
+        int price
+        int inventoryCount
+        date validFrom
+        string status "publish,unpublish"
+    }
+
+    ORDER {
+        int id PK
+        string code UK
+        string status "requested,rejected,approved"
+        string paymentMethod "card,cash"
+    }
+
+    ORDER-ITEM {
+        int id PK
+        int price
+    }
+
+    Destination {
+        int id PK
+        string name
+    }
+
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ ORDER-ITEM : includes
+    CATEGORY ||--o{ PRODUCT : contains
+    PRODUCT ||--|| ORDER-ITEM : "is represented by"
+    USER ||--o{ PRODUCT : publishes
+    PRODUCT }|--|{ Destination : serves
