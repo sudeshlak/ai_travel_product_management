@@ -19,7 +19,8 @@ erDiagram
         int price
         int inventoryCount
         date validFrom
-        string status "publish,unpublish"
+        date validUntil
+        string status "Active,Inactive"
     }
 
     ORDER {
@@ -31,7 +32,7 @@ erDiagram
 
     ORDER-ITEM {
         int id PK
-        int price
+        int price "snapshot of product price at order time"
     }
 
     Destination {
@@ -42,6 +43,6 @@ erDiagram
     USER ||--o{ ORDER : places
     ORDER ||--|{ ORDER-ITEM : includes
     CATEGORY ||--o{ PRODUCT : contains
-    PRODUCT ||--|| ORDER-ITEM : "is represented by"
+    PRODUCT ||--o{ ORDER-ITEM : "ordered as"
     USER ||--o{ PRODUCT : publishes
     PRODUCT }|--|{ Destination : serves
