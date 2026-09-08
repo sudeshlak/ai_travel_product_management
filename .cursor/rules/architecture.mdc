@@ -1,0 +1,54 @@
+---
+description: Backend 3-layer architecture conventions (Presentation, Application, Data Access)
+globs: backend/app/**/*.php,backend/routes/**/*.php,backend/tests/**/*.php
+alwaysApply: false
+---
+
+# Backend Layered Architecture
+
+Three layers, each with a single responsibility. Never skip a layer or reach across one.
+
+```
+Controller -> Service -> Repository / Integration -> Model
+```
+
+## Layer 1 - Presentation (`app/Http`)
+
+- Controllers (`Http/Controllers/Api/V{n}`) only translate HTTP to a call: validate via a FormRequest, call exactly one service method, return a Resource.
+- Controllers never contain business rules, never call Eloquent directly, never call an external client directly.
+- FormRequests (`Http/Requests`) own all input validation and authorization.
+- API Resources (`Http/Resources`) own response shaping only.
+- Routes live under a versioned prefix (e.g. `v1`) so the contract can evolve.
+
+## Layer 2 - Application (`app/Services`, `app/DataTransferObjects`, `app/Contracts`)
+
+- Services hold business rules and orchestrate one use case per public method.
+- Services depend only on interfaces from `app/Contracts`, injected via the constructor. Never depend on a concrete repository or a concrete third-party client.
+- Services accept and return DTOs or models; never accept a `Request` or return a `Response`.
+- Wrap multi-write operations in `DB::transaction`.
+- DTOs (`app/DataTransferObjects`) are `readonly` classes with typed, promoted constructor properties. Use a DTO instead of passing arrays or the raw `Request` across a layer boundary.
+- Contracts (`app/Contracts/Repositories`, `app/Contracts/Integrations`) are narrow interfaces: one interface per aggregate or per external capability, not one wide interface for everything.
+
+## Layer 3 - Data Access (`app/Repositories`, `app/Infrastructure`, `app/Models`)
+
+- Only this layer touches the database or the network.
+- Repositories (`app/Repositories/Eloquent`) implement a `Contracts\Repositories` interface and own all query building. Centralize shared filters (e.g. visibility/validity rules) here or in a model scope so no caller can bypass them.
+- Models keep relationships, casts, and query scopes only. No orchestration logic in a model.
+- External adapters (`app/Infrastructure`) implement a `Contracts\Integrations` interface, wrap the third-party SDK/HTTP call, translate the response into a DTO, and throw a dedicated exception from `app/Exceptions` on failure. No other layer imports a third-party client directly.
+
+## Wiring
+
+- All interface-to-implementation bindings live in `app/Providers/DomainServiceProvider.php`, registered in `bootstrap/providers.php`. Do not bind in `AppServiceProvider` or inline in a controller.
+- A new implementation (different storage backend, different provider) is a new class plus one binding line; it must never require editing a service.
+
+## Testing conventions
+
+- `tests/Unit`: test services against fakes of their injected interfaces; no database, no HTTP.
+- `tests/Feature`: test controllers/routes end to end against the real database, binding a fake for any external integration interface.
+
+## Naming conventions
+
+- Repository interface: `{Aggregate}RepositoryInterface`; implementation: `Eloquent{Aggregate}Repository`.
+- Integration interface: `{Capability}Interface` (e.g. `...GeneratorInterface`); implementation named after the concrete provider/transport.
+- Service: `{FeatureArea}Service`.
+- DTO: `{Aggregate}Data` for write payloads, `{Aggregate}SearchCriteria` (or similar) for query filters.
