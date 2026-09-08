@@ -1,0 +1,67 @@
+---
+description: Frontend Bootstrap + SCSS styling conventions (grid, co-located styles, breakpoints, variables, functions)
+globs: frontend/**/*.{tsx,scss,css}
+alwaysApply: false
+---
+
+# Frontend Styles
+
+## Layout
+
+- Prefer Bootstrap **`container` / `row` / `col-*`** for page and section layout.
+- Prefer Bootstrap utilities (`gap-*`, `mb-*`, `d-*`, `align-items-*`) before custom CSS.
+- Do not revive fixed `#root` widths or starter layouts that fight the grid.
+
+```tsx
+// ✅ GOOD
+<div className="container py-4">
+  <div className="row">
+    <div className="col-12 col-md-8">...</div>
+    <div className="col-12 col-md-4">...</div>
+  </div>
+</div>
+```
+
+## File organization
+
+- One co-located style file per component that needs custom styles: `Component.tsx` + `Component.scss`.
+- Import the SCSS from the component file.
+- Shared tokens live in [`frontend/src/styles/_variables.scss`](frontend/src/styles/_variables.scss).
+- Global Bootstrap entry is [`frontend/src/styles/main.scss`](frontend/src/styles/main.scss).
+- Do not dump component-specific rules into `main.scss` or `_variables.scss`.
+
+## Breakpoints / media queries
+
+- Use Bootstrap breakpoint tokens from `_variables.scss` (`$breakpoint-sm` … `$breakpoint-xxl`, or `$grid-breakpoints`).
+- When a component needs different styles per breakpoint, keep those media-query blocks in that component’s SCSS (or a dedicated partial imported by it)—not in global CSS.
+- Prefer `min-width` queries matching Bootstrap’s mobile-first grid.
+
+```scss
+@use '../styles/variables' as *;
+
+.card {
+  padding: 1rem;
+
+  @media (min-width: $breakpoint-md) {
+    padding: 1.5rem;
+  }
+}
+```
+
+## Variables (centralize styling)
+
+- Prefer SCSS variables / CSS custom properties from `_variables.scss` for colors, spacing, brand, breakpoints.
+- Do not hard-code repeated hex/px values in component SCSS when a shared token exists or should be added.
+- Add new shared tokens to `_variables.scss` when the same value is reused across components.
+
+## Functions & reusability
+
+- Use SCSS `@function` / `@mixin` for repeated calculations or patterns (e.g. spacing scale, focus ring, truncated text).
+- Place shared mixins/functions in `frontend/src/styles/` (e.g. `_mixins.scss`, `_functions.scss`) and `@use` them from components.
+- Keep mixins small and purposeful; do not wrap one-off styles.
+
+## Nesting & scope
+
+- Nest under a component root class (e.g. `.app`, `.product-card`) to avoid leaking styles.
+- Keep nesting shallow (usually ≤3 levels).
+- Override Bootstrap sparingly; prefer utilities + tokens first.
