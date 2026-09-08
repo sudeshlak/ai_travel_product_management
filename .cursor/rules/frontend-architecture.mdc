@@ -1,0 +1,56 @@
+---
+description: Frontend 3-layer architecture conventions (view, service, api)
+globs: frontend/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Layered Architecture
+
+Three layers, each with a single responsibility. Dependencies point one way only.
+
+```
+view -> store -> service -> api
+```
+
+## Layer 1 - view (`src/view`)
+
+- Components and pages own rendering and user interaction.
+- May use `useAppSelector`, `useAppDispatch`, and local `useState`.
+- Do not import from `service/` or call endpoints directly.
+- May import error classes from `api/errors` for `instanceof` checks.
+- Presentational components take props only; connected components select/dispatch and compose them.
+
+## Layer 2 - service (`src/service`)
+
+- One exported function per use case.
+- Owns orchestration, mapping response -> domain model, and business rules.
+- Pure helpers live in `mappers/` and `rules/`.
+- Never imports axios or the store.
+- Lets api errors propagate unless a business rule needs a fallback.
+
+## Layer 2 - store (`src/store`)
+
+- `createAsyncThunk` calls exactly one service function and `rejectWithValue(error)`.
+- Rejected case stores the error as-is: `state.error = action.payload`.
+- Components decide what to do with `instanceof` on that error.
+- `serializableCheck` is disabled so `Error` instances can live in state.
+
+## Layer 3 - api (`src/api`)
+
+- Only this layer talks to the network (axios `client`).
+- Each endpoint wraps its call in try/catch and throws via `mapAxiosError` (or the same mapping inline).
+- Response body types live in `api/responses/` (one type per endpoint success shape).
+- Error mapping:
+  - no response -> `ConnectionError`
+  - `401` -> `UnauthorizedError`
+  - `422` -> `ValidationError` (fields from array of single-key objects)
+  - any other status -> `UnexpectedError`
+- Never imports the store or a component.
+
+## Naming conventions
+
+- Endpoint module: `{resource}Endpoints.ts`
+- Service: `{area}Service.ts`
+- Mapper: `{resource}Mapper.ts`
+- Slice: `{resource}Slice.ts`, thunk names `'{resource}/{action}'`
+- Domain model in `types/`; response type in `api/responses/` suffixed (`ResourceResponse`)
