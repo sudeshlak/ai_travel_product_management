@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\ProductStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,6 +39,28 @@ class Product extends Model
             'valid_until' => 'date',
             'status' => ProductStatus::class,
         ];
+    }
+
+    /**
+     * Scope: products whose validity window covers the current date.
+     *
+     * @param  Builder<$this>  $query
+     */
+    #[Scope]
+    protected function valid(Builder $query): void
+    {
+        // TODO: implement
+    }
+
+    /**
+     * Scope: products whose validity window has passed.
+     *
+     * @param  Builder<$this>  $query
+     */
+    #[Scope]
+    protected function expired(Builder $query): void
+    {
+        // TODO: implement
     }
 
     /**
