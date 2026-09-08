@@ -1,0 +1,12 @@
+@use '../../styles/variables' as *;
+
+.login-page {
+  h1 {
+    color: $text-heading;
+  }
+
+  .btn-primary {
+    background-color: $brand-primary;
+    border-color: $brand-primary;
+  }
+}
