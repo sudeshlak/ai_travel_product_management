@@ -3,13 +3,12 @@ import {
   logout as logoutEndpoint,
 } from '@/api/endpoints/authEndpoints'
 import type { LoginCredentials } from '@/api/endpoints/authEndpoints'
-import { mapLoginResponse } from '@/service/mappers/authMapper'
 import { clearToken, setToken } from '@/service/localStorageService'
 import type { User } from '@/types/User'
 
 export async function login(credentials: LoginCredentials): Promise<{ user: User }> {
   const response = await loginEndpoint(credentials)
-  const { token, user } = mapLoginResponse(response)
+  const { token, user } = response
   setToken(token)
   return { user }
 }
