@@ -13,6 +13,14 @@ export default defineConfig({
       '@': path.resolve(rootDir, 'src'),
     },
   },
+  server: {
+    host: true,
+    port: 5173,
+    watch: {
+      // Docker Desktop bind mounts often need polling for HMR
+      usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {
