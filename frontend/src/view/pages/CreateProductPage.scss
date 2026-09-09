@@ -1,0 +1,7 @@
+@use '../../styles/variables' as *;
+
+.create-product-page {
+  h1 {
+    color: $text-heading;
+  }
+}

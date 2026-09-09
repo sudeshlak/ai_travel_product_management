@@ -66,7 +66,9 @@ function ProductsPage() {
 
   return (
     <div className="products-page">
-      <AppHeader />
+      <AppHeader
+        primaryAction={{ label: 'Create product', to: '/products/create' }}
+      />
       <main className="container pb-4">
         <div className="row mb-3">
           <div className="col-12">

@@ -1,9 +1,14 @@
 import {
+  createProduct as createProductEndpoint,
   deleteProduct as deleteProductEndpoint,
   listProducts as listProductsEndpoint,
 } from '@/api/endpoints/productEndpoints'
-import { mapProductList } from '@/service/mappers/productMapper'
-import type { ProductListPage } from '@/types/Product'
+import { mapProduct, mapProductList } from '@/service/mappers/productMapper'
+import type { Product, ProductListPage } from '@/types/Product'
+import type {
+  CreateProductPayload,
+  ProductFormValues,
+} from '@/types/ProductFormValues'
 
 export type ListProductsInput = {
   page: number
@@ -16,6 +21,25 @@ export async function listProducts(input: ListProductsInput): Promise<ProductLis
     perPage: input.perPage,
   })
   return mapProductList(response)
+}
+
+export function toCreateProductPayload(values: ProductFormValues): CreateProductPayload {
+  return {
+    product_name: values.productName.trim(),
+    category_id: Number(values.categoryId),
+    description: values.description.trim(),
+    price: Number(values.price),
+    inventory_count: Number(values.inventoryCount),
+    valid_from: values.validFrom,
+    valid_until: values.validUntil,
+    status: values.status,
+    destination_ids: values.destinationIds,
+  }
+}
+
+export async function createProduct(values: ProductFormValues): Promise<Product> {
+  const response = await createProductEndpoint(toCreateProductPayload(values))
+  return mapProduct(response)
 }
 
 export async function deleteProduct(id: number): Promise<void> {
