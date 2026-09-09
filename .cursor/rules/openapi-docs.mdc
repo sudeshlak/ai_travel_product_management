@@ -1,0 +1,25 @@
+---
+description: Keep backend/docs/openapi.yaml in sync with every API endpoint
+globs: backend/routes/**/*.php,backend/app/Http/**/*.php,backend/docs/**/*.{yaml,yml}
+alwaysApply: false
+---
+
+# OpenAPI documentation
+
+The canonical API contract is [`backend/docs/openapi.yaml`](backend/docs/openapi.yaml).
+
+- Every route registered under `backend/routes/api.php` must have a matching path and HTTP method in that file.
+- When you add, change, or remove an endpoint (path, method, auth, request body, query params, status codes, or response shape), update `backend/docs/openapi.yaml` in the **same change**.
+- Keep schemas aligned with FormRequests and API Resources. Do not invent fields the API does not return.
+- Public vs Sanctum auth in the spec must match the route middleware (`auth:sanctum` → `security: [sanctum: []]`; public routes → `security: []`).
+- Do not document framework health (`GET /up`) or non-API routes in this file.
+
+```yaml
+# ❌ BAD — new route without OpenAPI update
+# routes/api.php adds POST /api/v1/products/{product}/publish
+# openapi.yaml left unchanged
+
+# ✅ GOOD — same change updates both
+# routes/api.php adds the route
+# openapi.yaml adds /products/{product}/publish with request/response schemas
+```
