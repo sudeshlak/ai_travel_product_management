@@ -3,11 +3,25 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { logout } from '@/store/slices/authSlice'
 import './AppHeader.scss'
 
-type AppHeaderProps = {
-  title?: string
+export type AppHeaderPrimaryAction = {
+  label: string
+  to: string
 }
 
-function AppHeader({ title = 'Travel Product Management' }: AppHeaderProps) {
+type AppHeaderProps = {
+  title?: string
+  primaryAction?: AppHeaderPrimaryAction | null
+}
+
+const defaultPrimaryAction: AppHeaderPrimaryAction = {
+  label: 'Product manage',
+  to: '/products',
+}
+
+function AppHeader({
+  title = 'Travel Product Management',
+  primaryAction = defaultPrimaryAction,
+}: AppHeaderProps) {
   const dispatch = useAppDispatch()
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
 
@@ -21,9 +35,11 @@ function AppHeader({ title = 'Travel Product Management' }: AppHeaderProps) {
         </div>
         {isAuthenticated ? (
           <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
-            <Link to="/products" className="btn btn-outline-primary">
-              Product manage
-            </Link>
+            {primaryAction ? (
+              <Link to={primaryAction.to} className="btn btn-outline-primary">
+                {primaryAction.label}
+              </Link>
+            ) : null}
             <button
               type="button"
               className="btn btn-outline-secondary"

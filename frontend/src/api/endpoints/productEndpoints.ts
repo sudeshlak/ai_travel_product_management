@@ -1,6 +1,10 @@
 import { client } from '@/api/client'
 import { mapAxiosError } from '@/api/mapAxiosError'
-import type { ProductListResponse } from '@/api/responses/productResponse'
+import type {
+  ProductListResponse,
+  ProductResponse,
+} from '@/api/responses/productResponse'
+import type { CreateProductPayload } from '@/types/ProductFormValues'
 
 export type ListProductsParams = {
   page: number
@@ -18,6 +22,23 @@ export async function listProducts(
       },
     })
     return data
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
+export async function createProduct(
+  payload: CreateProductPayload,
+): Promise<ProductResponse> {
+  try {
+    const { data } = await client.post<{ data: ProductResponse } | ProductResponse>(
+      '/v1/products',
+      payload,
+    )
+    if (data && typeof data === 'object' && 'data' in data && data.data) {
+      return data.data
+    }
+    return data as ProductResponse
   } catch (error) {
     mapAxiosError(error)
   }

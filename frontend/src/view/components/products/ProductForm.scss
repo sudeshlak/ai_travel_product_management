@@ -1,0 +1,15 @@
+@use '../../../styles/variables' as *;
+
+.product-form {
+  &__destinations {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid rgba($text, 0.2);
+    border-radius: 0.375rem;
+
+    &.is-invalid {
+      border-color: #dc3545;
+    }
+  }
+}
