@@ -14,7 +14,7 @@ type AppHeaderProps = {
 }
 
 const defaultPrimaryAction: AppHeaderPrimaryAction = {
-  label: 'Product manage',
+  label: 'Manage products',
   to: '/products',
 }
 
@@ -26,29 +26,37 @@ function AppHeader({
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
 
   return (
-    <header className="app-header container py-4">
-      <div className="row align-items-center gy-3">
-        <div className="col-12 col-md-6">
-          <Link to="/" className="app-header__brand text-decoration-none">
-            {title}
-          </Link>
-        </div>
-        {isAuthenticated ? (
-          <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
-            {primaryAction ? (
-              <Link to={primaryAction.to} className="btn btn-outline-primary">
-                {primaryAction.label}
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => dispatch(logout())}
-            >
-              Sign out
-            </button>
+    <header className="app-header">
+      <div className="container py-4">
+        <div className="row align-items-center gy-3">
+          <div className="col-12 col-md-6">
+            <Link to="/" className="app-header__brand text-decoration-none">
+              {title}
+            </Link>
           </div>
-        ) : null}
+          {isAuthenticated ? (
+            <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
+              {primaryAction ? (
+                <Link to={primaryAction.to} className="btn btn-outline-primary">
+                  {primaryAction.label}
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => dispatch(logout())}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
+              <Link to="/login" className="btn btn-outline-primary">
+                Login
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

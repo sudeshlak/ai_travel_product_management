@@ -94,6 +94,8 @@ function ProductsPage() {
         ) : (
           <ProductsTable
             products={data?.items ?? []}
+            page={data?.page ?? page}
+            perPage={data?.perPage}
             onEdit={(product) => navigate(`/products/${product.id}/edit`)}
             onDelete={(product) => {
               deleteMutation.reset()
@@ -114,7 +116,7 @@ function ProductsPage() {
           <div className="col-12 col-sm-6 d-flex justify-content-sm-end gap-2">
             <button
               type="button"
-              className="btn btn-outline-secondary"
+              className="btn btn-outline-primary"
               disabled={!canGoPrev || isFetching}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
             >
@@ -122,7 +124,7 @@ function ProductsPage() {
             </button>
             <button
               type="button"
-              className="btn btn-outline-secondary"
+              className="btn btn-outline-primary"
               disabled={!canGoNext || isFetching}
               onClick={() => setPage((current) => current + 1)}
             >

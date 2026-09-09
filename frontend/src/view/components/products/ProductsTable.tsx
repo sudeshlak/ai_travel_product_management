@@ -4,12 +4,25 @@ import './ProductsTable.scss'
 
 type ProductsTableProps = {
   products: Product[]
+  page?: number
+  perPage?: number
   onEdit: (product: Product) => void
   onDelete: (product: Product) => void
 }
 
-function ProductsTable({ products, onEdit, onDelete }: ProductsTableProps) {
+function ProductsTable({
+  products,
+  page = 1,
+  perPage = products.length,
+  onEdit,
+  onDelete,
+}: ProductsTableProps) {
   const columns: ColumnDef<Product>[] = [
+    {
+      id: 'index',
+      header: '#',
+      cell: ({ row }) => (page - 1) * perPage + row.index + 1,
+    },
     {
       accessorKey: 'productName',
       header: 'Name',
