@@ -66,6 +66,7 @@ class ProductSearchServiceTest extends TestCase
                     && $criteria->maxPrice === null
                     && $criteria->status === ProductStatus::Active
                     && $criteria->onlyValid === true
+                    && $criteria->onlyInStock === true
                     && $criteria->userId === null
                     && $criteria->page === 1
                     && $criteria->perPage === 8;
@@ -121,6 +122,7 @@ class ProductSearchServiceTest extends TestCase
                     && $criteria->maxPrice === 10000.0
                     && $criteria->status === ProductStatus::Active
                     && $criteria->onlyValid === true
+                    && $criteria->onlyInStock === true
                     && $criteria->userId === null;
             }))
             ->andReturn($paginator);
@@ -172,14 +174,15 @@ class ProductSearchServiceTest extends TestCase
             ->with(Mockery::on(function (ProductSearchCriteria $criteria) {
                 return $criteria->keyword === 'show me something'
                     && $criteria->status === ProductStatus::Active
-                    && $criteria->onlyValid === true;
+                    && $criteria->onlyValid === true
+                    && $criteria->onlyInStock === true;
             }))
             ->andReturn($paginator);
 
         $this->assertSame($paginator, $this->service->search('show me something', 1, 15));
     }
 
-    public function test_status_and_validity_are_always_forced_regardless_of_filters(): void
+    public function test_status_validity_and_in_stock_are_always_forced_regardless_of_filters(): void
     {
         $filters = new ProductSearchFilters(keyword: 'anything');
 
@@ -191,7 +194,9 @@ class ProductSearchServiceTest extends TestCase
             ->shouldReceive('paginate')
             ->once()
             ->with(Mockery::on(function (ProductSearchCriteria $criteria) {
-                return $criteria->status === ProductStatus::Active && $criteria->onlyValid === true;
+                return $criteria->status === ProductStatus::Active
+                    && $criteria->onlyValid === true
+                    && $criteria->onlyInStock === true;
             }))
             ->andReturn($paginator);
 

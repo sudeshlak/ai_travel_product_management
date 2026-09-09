@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\Log;
 /**
  * Runs a natural-language, catalog-wide product search: an AI-backed
  * interpreter turns free text into filters, and this service always
- * enforces the Active + currently-valid business rules on top of
- * whatever the interpreter returns before querying via the ORM.
+ * enforces the Active + currently-valid + in-stock business rules on
+ * top of whatever the interpreter returns before querying via the ORM.
  */
 class ProductSearchService
 {
@@ -52,6 +52,7 @@ class ProductSearchService
             maxPrice: $filters->maxPrice,
             status: ProductStatus::Active,
             onlyValid: true,
+            onlyInStock: true,
             userId: null,
             page: $page,
             perPage: $perPage,
