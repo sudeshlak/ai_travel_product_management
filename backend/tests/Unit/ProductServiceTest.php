@@ -49,6 +49,20 @@ class ProductServiceTest extends TestCase
         $this->assertSame($paginator, $this->service->list($criteria));
     }
 
+    public function test_find_owned_forwards_to_repository(): void
+    {
+        $product = new Product;
+        $product->id = 12;
+
+        $this->products
+            ->shouldReceive('findOwnedOrFail')
+            ->once()
+            ->with(12, 6)
+            ->andReturn($product);
+
+        $this->assertSame($product, $this->service->findOwned(12, 6));
+    }
+
     public function test_delete_finds_owned_product_then_deletes(): void
     {
         $product = new Product;

@@ -121,6 +121,67 @@ class ProductControllerTest extends TestCase
         ]);
     }
 
+    public function test_products_show_requires_authentication(): void
+    {
+        $this->getJson('/api/v1/products/1')->assertUnauthorized();
+    }
+
+    public function test_show_returns_owned_product_with_relations(): void
+    {
+        $owner = User::factory()->create();
+        $category = Category::factory()->create(['name' => 'Hotels']);
+        $product = Product::factory()->for($owner)->for($category)->create([
+            'product_name' => 'Show Product',
+            'description' => 'Show description',
+            'price' => 150.50,
+            'inventory_count' => 8,
+            'valid_from' => '2026-01-01',
+            'valid_until' => '2026-12-31',
+            'status' => ProductStatus::Active,
+        ]);
+        $destination = Destination::factory()->create(['name' => 'Galle']);
+        $product->destinations()->attach($destination);
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/products/'.$product->id)
+            ->assertOk()
+            ->assertJsonPath('data.id', $product->id)
+            ->assertJsonPath('data.product_name', 'Show Product')
+            ->assertJsonPath('data.description', 'Show description')
+            ->assertJsonPath('data.price', '150.50')
+            ->assertJsonPath('data.inventory_count', 8)
+            ->assertJsonPath('data.valid_from', '2026-01-01')
+            ->assertJsonPath('data.valid_until', '2026-12-31')
+            ->assertJsonPath('data.status', 'Active')
+            ->assertJsonPath('data.category.id', $category->id)
+            ->assertJsonPath('data.category.name', 'Hotels')
+            ->assertJsonPath('data.destinations.0.id', $destination->id)
+            ->assertJsonPath('data.destinations.0.name', 'Galle');
+    }
+
+    public function test_show_returns_404_for_another_users_product(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $product = Product::factory()->for($other)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/products/'.$product->id)
+            ->assertNotFound();
+    }
+
+    public function test_show_returns_404_for_missing_product(): void
+    {
+        $owner = User::factory()->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/products/999999')
+            ->assertNotFound();
+    }
+
     public function test_products_update_requires_authentication(): void
     {
         $this->putJson('/api/v1/products/1', [])->assertUnauthorized();
