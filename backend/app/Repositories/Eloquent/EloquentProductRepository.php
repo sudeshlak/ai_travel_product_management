@@ -7,6 +7,7 @@ use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class EloquentProductRepository implements ProductRepositoryInterface
 {
@@ -15,26 +16,115 @@ class EloquentProductRepository implements ProductRepositoryInterface
      */
     public function paginate(ProductSearchCriteria $criteria): LengthAwarePaginator
     {
-        // TODO: implement
+        $query = Product::query()
+            ->with(['category', 'destinations']);
+
+        if ($criteria->userId !== null) {
+            $query->where('user_id', $criteria->userId);
+        }
+
+        if ($criteria->status !== null) {
+            $query->where('status', $criteria->status);
+        }
+
+        if ($criteria->keyword !== null && $criteria->keyword !== '') {
+            $query->where(function ($builder) use ($criteria) {
+                $builder
+                    ->where('product_name', 'like', '%'.$criteria->keyword.'%')
+                    ->orWhere('description', 'like', '%'.$criteria->keyword.'%');
+            });
+        }
+
+        if ($criteria->categoryId !== null) {
+            $query->where('category_id', $criteria->categoryId);
+        }
+
+        if ($criteria->destinationIds !== []) {
+            $query->whereHas('destinations', function ($builder) use ($criteria) {
+                $builder->whereIn('destinations.id', $criteria->destinationIds);
+            });
+        }
+
+        if ($criteria->minPrice !== null) {
+            $query->where('price', '>=', $criteria->minPrice);
+        }
+
+        if ($criteria->maxPrice !== null) {
+            $query->where('price', '<=', $criteria->maxPrice);
+        }
+
+        if ($criteria->onlyValid) {
+            $query->valid();
+        }
+
+        if ($criteria->onlyInStock) {
+            $query->where('inventory_count', '>', 0);
+        }
+
+        return $query
+            ->orderByDesc('id')
+            ->paginate(
+                perPage: $criteria->perPage,
+                page: $criteria->page,
+            );
     }
 
     public function findOrFail(int $id): Product
     {
-        // TODO: implement
+        return Product::query()->findOrFail($id);
     }
 
-    public function create(ProductData $data): Product
+    public function findOwnedOrFail(int $id, int $userId): Product
     {
-        // TODO: implement
+        return Product::query()
+            ->where('user_id', $userId)
+            ->findOrFail($id);
+    }
+
+    public function create(ProductData $data, int $userId): Product
+    {
+        return DB::transaction(function () use ($data, $userId): Product {
+            $product = Product::query()->create([
+                'user_id' => $userId,
+                'product_name' => $data->productName,
+                'category_id' => $data->categoryId,
+                'description' => $data->description,
+                'price' => $data->price,
+                'inventory_count' => $data->inventoryCount,
+                'valid_from' => $data->validFrom,
+                'valid_until' => $data->validUntil,
+                'status' => $data->status,
+            ]);
+
+            $product->destinations()->sync($data->destinationIds);
+
+            return $product->refresh();
+        });
     }
 
     public function update(Product $product, ProductData $data): Product
     {
-        // TODO: implement
+        return DB::transaction(function () use ($product, $data): Product {
+            $product->fill([
+                'product_name' => $data->productName,
+                'category_id' => $data->categoryId,
+                'description' => $data->description,
+                'price' => $data->price,
+                'inventory_count' => $data->inventoryCount,
+                'valid_from' => $data->validFrom,
+                'valid_until' => $data->validUntil,
+                'status' => $data->status,
+            ]);
+            $product->save();
+
+            $product->destinations()->sync($data->destinationIds);
+
+            return $product->refresh();
+        });
     }
 
     public function delete(Product $product): void
     {
-        // TODO: implement
+        $product->delete();
     }
 }

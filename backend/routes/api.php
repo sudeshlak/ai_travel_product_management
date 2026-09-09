@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\DestinationController;
 use App\Http\Controllers\Api\V1\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +12,14 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
-        Route::apiResource('products', ProductController::class);
+        Route::get('categories', [CategoryController::class, 'index']);
+        Route::get('destinations', [DestinationController::class, 'index']);
+        Route::get('products', [ProductController::class, 'index']);
+        Route::post('products', [ProductController::class, 'store']);
+        Route::get('products/{product}', [ProductController::class, 'show']);
+        Route::put('products/{product}', [ProductController::class, 'update']);
+        Route::delete('products/{product}', [ProductController::class, 'destroy']);
     });
+
+    Route::post('products/search', [ProductController::class, 'search']);
 });
