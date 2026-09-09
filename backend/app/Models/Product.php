@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\ProductStatus;
+use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,7 +27,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 ])]
 class Product extends Model
 {
-    use SoftDeletes;
+    /** @use HasFactory<ProductFactory> */
+    use HasFactory, SoftDeletes;
 
     /**
      * @return array<string, string>
@@ -49,7 +52,11 @@ class Product extends Model
     #[Scope]
     protected function valid(Builder $query): void
     {
-        // TODO: implement
+        $today = now()->toDateString();
+
+        $query
+            ->whereDate('valid_from', '<=', $today)
+            ->whereDate('valid_until', '>=', $today);
     }
 
     /**
@@ -60,7 +67,7 @@ class Product extends Model
     #[Scope]
     protected function expired(Builder $query): void
     {
-        // TODO: implement
+        $query->whereDate('valid_until', '<', now()->toDateString());
     }
 
     /**

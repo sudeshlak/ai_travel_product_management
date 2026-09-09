@@ -6,12 +6,18 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProductRequest extends FormRequest
 {
+    use ValidatesProductWrite;
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function rules(): array
     {
-        // TODO: implement
-        return [];
+        return $this->productWriteRules();
     }
 }

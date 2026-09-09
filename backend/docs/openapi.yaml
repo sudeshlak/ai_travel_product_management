@@ -1,0 +1,545 @@
+openapi: 3.0.3
+info:
+  title: AI Travel Product Management API
+  description: Versioned JSON API for authentication, catalog reference data, and product management.
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: Version 1
+
+tags:
+  - name: Auth
+    description: Login, logout, and current user
+  - name: Categories
+    description: Product categories
+  - name: Destinations
+    description: Travel destinations
+  - name: Products
+    description: Owner product CRUD and public catalog search
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: Authenticate with email and password; returns a Sanctum personal access token and user.
+      operationId: authLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out
+      description: Revoke the current Sanctum personal access token.
+      operationId: authLogout
+      security:
+        - sanctum: []
+      responses:
+        '204':
+          description: Token revoked
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      description: Return the authenticated user's profile.
+      operationId: authMe
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      operationId: listCategories
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Category list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamedItemCollection'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /destinations:
+    get:
+      tags: [Destinations]
+      summary: List destinations
+      operationId: listDestinations
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Destination list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamedItemCollection'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: List owned products
+      description: Paginated list of the authenticated user's products (all statuses), with category and destinations.
+      operationId: listProducts
+      security:
+        - sanctum: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated product list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductCollection'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags: [Products]
+      summary: Create product
+      operationId: createProduct
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /products/search:
+    post:
+      tags: [Products]
+      summary: Search catalog
+      description: >
+        Public natural-language / AI catalog search. Results are limited to Active products
+        that are currently valid and in stock. An empty or omitted query browses that catalog.
+      operationId: searchProducts
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSearchRequest'
+      responses:
+        '200':
+          description: Paginated catalog results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductCollection'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /products/{product}:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    get:
+      tags: [Products]
+      summary: Show owned product
+      description: Return a product owned by the authenticated user. Returns 404 if not found or not owned.
+      operationId: showProduct
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Products]
+      summary: Update owned product
+      description: Full update of a product owned by the authenticated user. Returns 404 if not found or not owned.
+      operationId: updateProduct
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Products]
+      summary: Delete owned product
+      description: Delete a product owned by the authenticated user. Returns 404 if not found or not owned.
+      operationId: deleteProduct
+      security:
+        - sanctum: []
+      responses:
+        '204':
+          description: Product deleted
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: Laravel Sanctum personal access token from POST /auth/login
+
+  parameters:
+    ProductId:
+      name: product
+      in: path
+      required: true
+      description: Product integer id
+      schema:
+        type: integer
+        minimum: 1
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 15
+
+  responses:
+    Unauthenticated:
+      description: Missing or invalid bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    NotFound:
+      description: Resource not found (including not owned)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+  schemas:
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message:
+          type: string
+          example: The given data was invalid.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    User:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    UserData:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required: [token, user]
+      description: Unwrapped auth payload (AuthTokenResource has no data wrapper)
+      properties:
+        token:
+          type: string
+          description: Sanctum plain-text personal access token
+        user:
+          $ref: '#/components/schemas/User'
+
+    NamedItem:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    NamedItemCollection:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamedItem'
+
+    ProductStatus:
+      type: string
+      enum: [Active, Inactive]
+
+    Product:
+      type: object
+      required:
+        - id
+        - product_name
+        - description
+        - price
+        - inventory_count
+        - valid_from
+        - valid_until
+        - status
+      properties:
+        id:
+          type: integer
+        product_name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+          minimum: 0
+        inventory_count:
+          type: integer
+          minimum: 0
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        category:
+          $ref: '#/components/schemas/NamedItem'
+        destinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamedItem'
+
+    ProductData:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
+
+    ProductWriteRequest:
+      type: object
+      required:
+        - product_name
+        - category_id
+        - description
+        - price
+        - inventory_count
+        - valid_from
+        - valid_until
+        - status
+        - destination_ids
+      properties:
+        product_name:
+          type: string
+          maxLength: 255
+        category_id:
+          type: integer
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+          minimum: 0
+        inventory_count:
+          type: integer
+          minimum: 0
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        destination_ids:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+
+    ProductSearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Natural-language search text; omit or null to browse the filtered catalog
+        page:
+          type: integer
+          minimum: 1
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          nullable: true
+          format: uri
+        last:
+          type: string
+          nullable: true
+          format: uri
+        prev:
+          type: string
+          nullable: true
+          format: uri
+        next:
+          type: string
+          nullable: true
+          format: uri
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+          nullable: true
+        last_page:
+          type: integer
+        path:
+          type: string
+        per_page:
+          type: integer
+        to:
+          type: integer
+          nullable: true
+        total:
+          type: integer
+
+    PaginatedProductCollection:
+      type: object
+      required: [data, links, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'

@@ -19,26 +19,29 @@ class ProductService
      */
     public function list(ProductSearchCriteria $criteria): LengthAwarePaginator
     {
-        // TODO: implement
+        return $this->products->paginate($criteria);
     }
 
-    public function find(int $id): Product
+    public function findOwned(int $id, int $userId): Product
     {
-        // TODO: implement
+        return $this->products->findOwnedOrFail($id, $userId);
     }
 
-    public function create(ProductData $data): Product
+    public function create(ProductData $data, int $userId): Product
     {
-        // TODO: implement
+        return $this->products->create($data, $userId);
     }
 
-    public function update(int $id, ProductData $data): Product
+    public function update(int $id, ProductData $data, int $userId): Product
     {
-        // TODO: implement
+        $product = $this->products->findOwnedOrFail($id, $userId);
+
+        return $this->products->update($product, $data);
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $userId): void
     {
-        // TODO: implement
+        $product = $this->products->findOwnedOrFail($id, $userId);
+        $this->products->delete($product);
     }
 }

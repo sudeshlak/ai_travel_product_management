@@ -11,6 +11,7 @@ export type ProductDestinationResponse = {
 export type ProductResponse = {
   id: number
   product_name: string
+  description?: string
   price: string
   inventory_count: number
   valid_from: string
