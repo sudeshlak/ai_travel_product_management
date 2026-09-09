@@ -22,9 +22,9 @@ class ProductService
         return $this->products->paginate($criteria);
     }
 
-    public function find(int $id): Product
+    public function findOwned(int $id, int $userId): Product
     {
-        return $this->products->findOrFail($id);
+        return $this->products->findOwnedOrFail($id, $userId);
     }
 
     public function create(ProductData $data, int $userId): Product

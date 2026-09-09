@@ -61,10 +61,11 @@ class ProductController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(int $product): ProductResource
+    public function show(Request $request, int $product): ProductResource
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        $found = $this->products->findOwned($product, $request->user()->id);
+
+        return new ProductResource($found->load(['category', 'destinations']));
     }
 
     public function update(UpdateProductRequest $request, int $product): ProductResource
