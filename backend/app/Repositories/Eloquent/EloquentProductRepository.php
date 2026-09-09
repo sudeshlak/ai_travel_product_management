@@ -73,10 +73,25 @@ class EloquentProductRepository implements ProductRepositoryInterface
             ->findOrFail($id);
     }
 
-    public function create(ProductData $data): Product
+    public function create(ProductData $data, int $userId): Product
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        return DB::transaction(function () use ($data, $userId): Product {
+            $product = Product::query()->create([
+                'user_id' => $userId,
+                'product_name' => $data->productName,
+                'category_id' => $data->categoryId,
+                'description' => $data->description,
+                'price' => $data->price,
+                'inventory_count' => $data->inventoryCount,
+                'valid_from' => $data->validFrom,
+                'valid_until' => $data->validUntil,
+                'status' => $data->status,
+            ]);
+
+            $product->destinations()->sync($data->destinationIds);
+
+            return $product->refresh();
+        });
     }
 
     public function update(Product $product, ProductData $data): Product
