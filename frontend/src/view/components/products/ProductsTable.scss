@@ -1,0 +1,21 @@
+@use '../../../styles/variables' as *;
+
+.products-table {
+  th,
+  td {
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
