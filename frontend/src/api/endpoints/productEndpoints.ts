@@ -11,6 +11,15 @@ export type ListProductsParams = {
   perPage?: number
 }
 
+function unwrapProduct(
+  data: { data: ProductResponse } | ProductResponse,
+): ProductResponse {
+  if (data && typeof data === 'object' && 'data' in data && data.data) {
+    return data.data
+  }
+  return data as ProductResponse
+}
+
 export async function listProducts(
   params: ListProductsParams,
 ): Promise<ProductListResponse> {
@@ -27,6 +36,17 @@ export async function listProducts(
   }
 }
 
+export async function getProduct(id: number): Promise<ProductResponse> {
+  try {
+    const { data } = await client.get<{ data: ProductResponse } | ProductResponse>(
+      `/v1/products/${id}`,
+    )
+    return unwrapProduct(data)
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
 export async function createProduct(
   payload: CreateProductPayload,
 ): Promise<ProductResponse> {
@@ -35,10 +55,22 @@ export async function createProduct(
       '/v1/products',
       payload,
     )
-    if (data && typeof data === 'object' && 'data' in data && data.data) {
-      return data.data
-    }
-    return data as ProductResponse
+    return unwrapProduct(data)
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
+export async function updateProduct(
+  id: number,
+  payload: CreateProductPayload,
+): Promise<ProductResponse> {
+  try {
+    const { data } = await client.put<{ data: ProductResponse } | ProductResponse>(
+      `/v1/products/${id}`,
+      payload,
+    )
+    return unwrapProduct(data)
   } catch (error) {
     mapAxiosError(error)
   }
