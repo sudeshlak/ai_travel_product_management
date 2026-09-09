@@ -11,4 +11,6 @@ interface DestinationRepositoryInterface
      * @return Collection<int, Destination>
      */
     public function allOrderedByName(): Collection;
+
+    public function findByName(string $name): ?Destination;
 }

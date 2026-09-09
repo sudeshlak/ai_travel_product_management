@@ -13,6 +13,7 @@ readonly class ProductSearchCriteria
         public ?string $keyword = null,
         public ?int $categoryId = null,
         public array $destinationIds = [],
+        public ?float $minPrice = null,
         public ?float $maxPrice = null,
         public ?ProductStatus $status = null,
         public bool $onlyValid = true,

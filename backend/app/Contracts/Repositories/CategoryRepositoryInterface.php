@@ -11,4 +11,6 @@ interface CategoryRepositoryInterface
      * @return Collection<int, Category>
      */
     public function allOrderedByName(): Collection;
+
+    public function findByName(string $name): ?Category;
 }
