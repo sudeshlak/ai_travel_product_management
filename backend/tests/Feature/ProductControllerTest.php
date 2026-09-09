@@ -25,7 +25,7 @@ class ProductControllerTest extends TestCase
         $this->deleteJson('/api/v1/products/1')->assertUnauthorized();
     }
 
-    public function test_index_returns_only_authenticated_users_active_products(): void
+    public function test_index_returns_all_authenticated_users_products_including_inactive(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -37,7 +37,7 @@ class ProductControllerTest extends TestCase
         $destination = Destination::factory()->create(['name' => 'Colombo']);
         $ownedActive->destinations()->attach($destination);
 
-        Product::factory()->for($owner)->inactive()->create([
+        $ownedInactive = Product::factory()->for($owner)->inactive()->create([
             'product_name' => 'Owner Inactive',
         ]);
         Product::factory()->for($other)->create([
@@ -50,15 +50,10 @@ class ProductControllerTest extends TestCase
         $response = $this->getJson('/api/v1/products');
 
         $response->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $ownedActive->id)
-            ->assertJsonPath('data.0.product_name', 'Owner Active')
-            ->assertJsonPath('data.0.status', 'Active')
-            ->assertJsonPath('data.0.category.id', $ownedActive->category_id)
-            ->assertJsonPath('data.0.destinations.0.name', 'Colombo')
+            ->assertJsonCount(2, 'data')
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.per_page', 15)
-            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.total', 2)
             ->assertJsonStructure([
                 'data' => [[
                     'id',
@@ -69,10 +64,24 @@ class ProductControllerTest extends TestCase
                     'valid_until',
                     'status',
                     'category' => ['id', 'name'],
-                    'destinations' => [['id', 'name']],
+                    'destinations',
                 ]],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
             ]);
+
+        $ids = collect($response->json('data'))->pluck('id')->all();
+        $this->assertContains($ownedActive->id, $ids);
+        $this->assertContains($ownedInactive->id, $ids);
+
+        $activeRow = collect($response->json('data'))->firstWhere('id', $ownedActive->id);
+        $this->assertSame('Owner Active', $activeRow['product_name']);
+        $this->assertSame('Active', $activeRow['status']);
+        $this->assertSame($ownedActive->category_id, $activeRow['category']['id']);
+        $this->assertSame('Colombo', $activeRow['destinations'][0]['name']);
+
+        $inactiveRow = collect($response->json('data'))->firstWhere('id', $ownedInactive->id);
+        $this->assertSame('Owner Inactive', $inactiveRow['product_name']);
+        $this->assertSame('Inactive', $inactiveRow['status']);
     }
 
     public function test_index_supports_pagination(): void

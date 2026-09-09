@@ -28,7 +28,7 @@ class ProductController extends Controller
     public function index(IndexProductRequest $request): AnonymousResourceCollection
     {
         $paginator = $this->products->list(new ProductSearchCriteria(
-            status: ProductStatus::Active,
+            status: null,
             onlyValid: false,
             userId: $request->user()->id,
             page: $request->integer('page', 1),
