@@ -3,6 +3,7 @@ import {
   deleteProduct as deleteProductEndpoint,
   getProduct as getProductEndpoint,
   listProducts as listProductsEndpoint,
+  searchProducts as searchProductsEndpoint,
   updateProduct as updateProductEndpoint,
 } from '@/api/endpoints/productEndpoints'
 import { mapProduct, mapProductList } from '@/service/mappers/productMapper'
@@ -17,8 +18,25 @@ export type ListProductsInput = {
   perPage?: number
 }
 
+export type SearchProductsInput = {
+  query: string
+  page: number
+  perPage?: number
+}
+
 export async function listProducts(input: ListProductsInput): Promise<ProductListPage> {
   const response = await listProductsEndpoint({
+    page: input.page,
+    perPage: input.perPage,
+  })
+  return mapProductList(response)
+}
+
+export async function searchProducts(
+  input: SearchProductsInput,
+): Promise<ProductListPage> {
+  const response = await searchProductsEndpoint({
+    query: input.query,
     page: input.page,
     perPage: input.perPage,
   })

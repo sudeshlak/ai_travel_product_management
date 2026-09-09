@@ -1,0 +1,14 @@
+@use '../../../styles/variables' as *;
+
+.product-search-bar {
+  &__input {
+    min-height: 2.75rem;
+  }
+
+  &__submit {
+    min-width: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
