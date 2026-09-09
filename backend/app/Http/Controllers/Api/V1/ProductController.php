@@ -7,9 +7,11 @@ use App\DataTransferObjects\ProductSearchCriteria;
 use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\IndexProductRequest;
+use App\Http\Requests\SearchProductRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Services\ProductSearchService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductService $products,
+        private readonly ProductSearchService $search,
     ) {}
 
     public function index(IndexProductRequest $request): AnonymousResourceCollection
@@ -31,6 +34,17 @@ class ProductController extends Controller
             page: $request->integer('page', 1),
             perPage: $request->integer('per_page', 15),
         ));
+
+        return ProductResource::collection($paginator);
+    }
+
+    public function search(SearchProductRequest $request): AnonymousResourceCollection
+    {
+        $paginator = $this->search->search(
+            query: (string) $request->input('query', ''),
+            page: $request->integer('page', 1),
+            perPage: $request->integer('per_page', 15),
+        );
 
         return ProductResource::collection($paginator);
     }

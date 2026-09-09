@@ -45,6 +45,10 @@ class EloquentProductRepository implements ProductRepositoryInterface
             });
         }
 
+        if ($criteria->minPrice !== null) {
+            $query->where('price', '>=', $criteria->minPrice);
+        }
+
         if ($criteria->maxPrice !== null) {
             $query->where('price', '<=', $criteria->maxPrice);
         }
