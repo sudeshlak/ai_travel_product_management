@@ -7,6 +7,7 @@ use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class EloquentProductRepository implements ProductRepositoryInterface
 {
@@ -80,8 +81,23 @@ class EloquentProductRepository implements ProductRepositoryInterface
 
     public function update(Product $product, ProductData $data): Product
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        return DB::transaction(function () use ($product, $data): Product {
+            $product->fill([
+                'product_name' => $data->productName,
+                'category_id' => $data->categoryId,
+                'description' => $data->description,
+                'price' => $data->price,
+                'inventory_count' => $data->inventoryCount,
+                'valid_from' => $data->validFrom,
+                'valid_until' => $data->validUntil,
+                'status' => $data->status,
+            ]);
+            $product->save();
+
+            $product->destinations()->sync($data->destinationIds);
+
+            return $product->refresh();
+        });
     }
 
     public function delete(Product $product): void

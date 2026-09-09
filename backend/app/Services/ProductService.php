@@ -33,10 +33,11 @@ class ProductService
         throw new \BadMethodCallException('Not implemented');
     }
 
-    public function update(int $id, ProductData $data): Product
+    public function update(int $id, ProductData $data, int $userId): Product
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        $product = $this->products->findOwnedOrFail($id, $userId);
+
+        return $this->products->update($product, $data);
     }
 
     public function delete(int $id, int $userId): void
