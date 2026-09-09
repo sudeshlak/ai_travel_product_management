@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ProductStatus;
+use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Product;
 use App\Models\User;
@@ -117,6 +118,129 @@ class ProductControllerTest extends TestCase
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
             'deleted_at' => null,
+        ]);
+    }
+
+    public function test_products_update_requires_authentication(): void
+    {
+        $this->putJson('/api/v1/products/1', [])->assertUnauthorized();
+    }
+
+    public function test_update_updates_owned_product_fields_and_destinations(): void
+    {
+        $owner = User::factory()->create();
+        $product = Product::factory()->for($owner)->create([
+            'product_name' => 'Old Name',
+            'description' => 'Old description',
+            'price' => 50,
+            'inventory_count' => 5,
+            'status' => ProductStatus::Active,
+        ]);
+        $oldDestination = Destination::factory()->create(['name' => 'Old Dest']);
+        $product->destinations()->attach($oldDestination);
+
+        $newCategory = Category::factory()->create(['name' => 'Tours']);
+        $newDestination = Destination::factory()->create(['name' => 'Kandy']);
+
+        Sanctum::actingAs($owner);
+
+        $response = $this->putJson('/api/v1/products/'.$product->id, [
+            'product_name' => 'Updated Name',
+            'category_id' => $newCategory->id,
+            'description' => 'Updated description',
+            'price' => 199.99,
+            'inventory_count' => 12,
+            'valid_from' => '2026-02-01',
+            'valid_until' => '2026-12-31',
+            'status' => 'Inactive',
+            'destination_ids' => [$newDestination->id],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.product_name', 'Updated Name')
+            ->assertJsonPath('data.description', 'Updated description')
+            ->assertJsonPath('data.price', '199.99')
+            ->assertJsonPath('data.inventory_count', 12)
+            ->assertJsonPath('data.valid_from', '2026-02-01')
+            ->assertJsonPath('data.valid_until', '2026-12-31')
+            ->assertJsonPath('data.status', 'Inactive')
+            ->assertJsonPath('data.category.id', $newCategory->id)
+            ->assertJsonPath('data.category.name', 'Tours')
+            ->assertJsonPath('data.destinations.0.id', $newDestination->id)
+            ->assertJsonPath('data.destinations.0.name', 'Kandy');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'user_id' => $owner->id,
+            'product_name' => 'Updated Name',
+            'category_id' => $newCategory->id,
+            'description' => 'Updated description',
+            'status' => 'Inactive',
+        ]);
+
+        $this->assertDatabaseMissing('destination_product', [
+            'product_id' => $product->id,
+            'destination_id' => $oldDestination->id,
+        ]);
+        $this->assertDatabaseHas('destination_product', [
+            'product_id' => $product->id,
+            'destination_id' => $newDestination->id,
+        ]);
+    }
+
+    public function test_update_validation_failure_returns_422(): void
+    {
+        $owner = User::factory()->create();
+        $product = Product::factory()->for($owner)->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson('/api/v1/products/'.$product->id, [
+            'product_name' => '',
+            'valid_from' => '2026-12-31',
+            'valid_until' => '2026-01-01',
+            'destination_ids' => [],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'product_name',
+                'category_id',
+                'description',
+                'price',
+                'inventory_count',
+                'valid_until',
+                'status',
+                'destination_ids',
+            ]);
+    }
+
+    public function test_update_returns_404_for_another_users_product(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $product = Product::factory()->for($other)->create([
+            'product_name' => 'Other Product',
+        ]);
+        $category = Category::factory()->create();
+        $destination = Destination::factory()->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->putJson('/api/v1/products/'.$product->id, [
+            'product_name' => 'Hijacked',
+            'category_id' => $category->id,
+            'description' => 'Should not apply',
+            'price' => 10,
+            'inventory_count' => 1,
+            'valid_from' => '2026-01-01',
+            'valid_until' => '2026-12-31',
+            'status' => 'Active',
+            'destination_ids' => [$destination->id],
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'user_id' => $other->id,
+            'product_name' => 'Other Product',
         ]);
     }
 }

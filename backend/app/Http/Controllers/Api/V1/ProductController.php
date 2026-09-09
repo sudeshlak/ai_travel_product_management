@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
 use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,7 @@ use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 
 class ProductController extends Controller
 {
@@ -47,8 +49,29 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, int $product): ProductResource
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        /** @var list<int> $destinationIds */
+        $destinationIds = array_map(
+            static fn (mixed $id): int => (int) $id,
+            $request->validated('destination_ids'),
+        );
+
+        $updated = $this->products->update(
+            $product,
+            new ProductData(
+                productName: $request->string('product_name')->toString(),
+                categoryId: $request->integer('category_id'),
+                description: $request->string('description')->toString(),
+                price: (float) $request->input('price'),
+                inventoryCount: $request->integer('inventory_count'),
+                validFrom: Carbon::parse($request->input('valid_from'))->startOfDay(),
+                validUntil: Carbon::parse($request->input('valid_until'))->startOfDay(),
+                status: ProductStatus::from($request->string('status')->toString()),
+                destinationIds: $destinationIds,
+            ),
+            $request->user()->id,
+        );
+
+        return new ProductResource($updated->load(['category', 'destinations']));
     }
 
     public function destroy(Request $request, int $product): JsonResponse

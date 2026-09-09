@@ -3,11 +3,13 @@
 namespace Tests\Unit;
 
 use App\Contracts\Repositories\ProductRepositoryInterface;
+use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
 use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -64,5 +66,40 @@ class ProductServiceTest extends TestCase
             ->with($product);
 
         $this->service->delete(15, 3);
+    }
+
+    public function test_update_finds_owned_product_then_updates(): void
+    {
+        $product = new Product;
+        $product->id = 9;
+
+        $data = new ProductData(
+            productName: 'Updated',
+            categoryId: 2,
+            description: 'Desc',
+            price: 20.5,
+            inventoryCount: 4,
+            validFrom: Carbon::parse('2026-01-01'),
+            validUntil: Carbon::parse('2026-06-01'),
+            status: ProductStatus::Active,
+            destinationIds: [1, 3],
+        );
+
+        $updated = new Product;
+        $updated->id = 9;
+
+        $this->products
+            ->shouldReceive('findOwnedOrFail')
+            ->once()
+            ->with(9, 4)
+            ->andReturn($product);
+
+        $this->products
+            ->shouldReceive('update')
+            ->once()
+            ->with($product, $data)
+            ->andReturn($updated);
+
+        $this->assertSame($updated, $this->service->update(9, $data, 4));
     }
 }
