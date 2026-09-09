@@ -11,6 +11,12 @@ export type ListProductsParams = {
   perPage?: number
 }
 
+export type SearchProductsParams = {
+  query: string
+  page: number
+  perPage?: number
+}
+
 function unwrapProduct(
   data: { data: ProductResponse } | ProductResponse,
 ): ProductResponse {
@@ -29,6 +35,21 @@ export async function listProducts(
         page: params.page,
         per_page: params.perPage ?? 15,
       },
+    })
+    return data
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
+export async function searchProducts(
+  params: SearchProductsParams,
+): Promise<ProductListResponse> {
+  try {
+    const { data } = await client.post<ProductListResponse>('/v1/products/search', {
+      query: params.query,
+      page: params.page,
+      per_page: params.perPage ?? 8,
     })
     return data
   } catch (error) {

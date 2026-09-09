@@ -1,0 +1,45 @@
+@use '../../../styles/variables' as *;
+
+.product-card {
+  border: 1px solid rgba($text, 0.18);
+  border-radius: 0.5rem;
+  background: $bg;
+
+  &__body {
+    padding: 1.25rem;
+  }
+
+  &__title {
+    color: $text-heading;
+  }
+
+  &__description {
+    color: $text;
+    font-size: 0.95rem;
+  }
+
+  &__meta {
+    display: grid;
+    gap: 0.75rem;
+
+    div {
+      display: grid;
+      gap: 0.15rem;
+    }
+
+    dt {
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: rgba($text, 0.85);
+    }
+
+    dd {
+      margin: 0;
+      color: $text-heading;
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+  }
+}
