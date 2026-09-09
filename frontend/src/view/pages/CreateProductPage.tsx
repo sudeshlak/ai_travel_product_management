@@ -6,6 +6,7 @@ import {
   UnexpectedError,
   ValidationError,
 } from '@/api/errors'
+import { mapServerErrors } from '@/service/mappers/productFormErrorMapper'
 import type { ProductFormValues } from '@/types/ProductFormValues'
 import AppHeader from '@/view/components/layout/AppHeader'
 import ProductForm from '@/view/components/products/ProductForm'
@@ -14,33 +15,6 @@ import { useCategoriesQuery } from '@/view/hooks/useCategoriesQuery'
 import { useCreateProductMutation } from '@/view/hooks/useCreateProductMutation'
 import { useDestinationsQuery } from '@/view/hooks/useDestinationsQuery'
 import './CreateProductPage.scss'
-
-const serverFieldToFormField: Record<string, keyof ProductFormValues> = {
-  product_name: 'productName',
-  productName: 'productName',
-  category_id: 'categoryId',
-  categoryId: 'categoryId',
-  description: 'description',
-  price: 'price',
-  inventory_count: 'inventoryCount',
-  inventoryCount: 'inventoryCount',
-  valid_from: 'validFrom',
-  validFrom: 'validFrom',
-  valid_until: 'validUntil',
-  validUntil: 'validUntil',
-  status: 'status',
-  destination_ids: 'destinationIds',
-  destinationIds: 'destinationIds',
-}
-
-function mapServerErrors(fields: Record<string, string>): Record<string, string> {
-  const mapped: Record<string, string> = {}
-  for (const [key, message] of Object.entries(fields)) {
-    const formKey = serverFieldToFormField[key] ?? key
-    mapped[formKey] = message
-  }
-  return mapped
-}
 
 function CreateProductPage() {
   const navigate = useNavigate()

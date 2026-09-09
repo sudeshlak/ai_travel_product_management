@@ -1,7 +1,9 @@
 import {
   createProduct as createProductEndpoint,
   deleteProduct as deleteProductEndpoint,
+  getProduct as getProductEndpoint,
   listProducts as listProductsEndpoint,
+  updateProduct as updateProductEndpoint,
 } from '@/api/endpoints/productEndpoints'
 import { mapProduct, mapProductList } from '@/service/mappers/productMapper'
 import type { Product, ProductListPage } from '@/types/Product'
@@ -23,6 +25,11 @@ export async function listProducts(input: ListProductsInput): Promise<ProductLis
   return mapProductList(response)
 }
 
+export async function getProduct(id: number): Promise<Product> {
+  const response = await getProductEndpoint(id)
+  return mapProduct(response)
+}
+
 export function toCreateProductPayload(values: ProductFormValues): CreateProductPayload {
   return {
     product_name: values.productName.trim(),
@@ -39,6 +46,14 @@ export function toCreateProductPayload(values: ProductFormValues): CreateProduct
 
 export async function createProduct(values: ProductFormValues): Promise<Product> {
   const response = await createProductEndpoint(toCreateProductPayload(values))
+  return mapProduct(response)
+}
+
+export async function updateProduct(
+  id: number,
+  values: ProductFormValues,
+): Promise<Product> {
+  const response = await updateProductEndpoint(id, toCreateProductPayload(values))
   return mapProduct(response)
 }
 

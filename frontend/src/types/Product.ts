@@ -11,6 +11,7 @@ export type ProductDestination = {
 export type Product = {
   id: number
   productName: string
+  description: string
   price: string
   inventoryCount: number
   validFrom: string
