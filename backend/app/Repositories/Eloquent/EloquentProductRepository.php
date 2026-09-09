@@ -57,6 +57,10 @@ class EloquentProductRepository implements ProductRepositoryInterface
             $query->valid();
         }
 
+        if ($criteria->onlyInStock) {
+            $query->where('inventory_count', '>', 0);
+        }
+
         return $query
             ->orderByDesc('id')
             ->paginate(

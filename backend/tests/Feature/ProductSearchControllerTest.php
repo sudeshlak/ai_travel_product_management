@@ -98,6 +98,30 @@ class ProductSearchControllerTest extends TestCase
         $this->assertSame($valid->id, $response->json('data.0.id'));
     }
 
+    public function test_search_excludes_out_of_stock_products(): void
+    {
+        $this->bindInterpreterThatMustNotBeCalled();
+
+        $owner = User::factory()->create();
+        Product::factory()->for($owner)->create([
+            'product_name' => 'Out of Stock',
+            'status' => ProductStatus::Active,
+            'inventory_count' => 0,
+        ]);
+        $inStock = Product::factory()->for($owner)->create([
+            'product_name' => 'In Stock',
+            'status' => ProductStatus::Active,
+            'inventory_count' => 5,
+        ]);
+
+        Sanctum::actingAs($owner);
+
+        $response = $this->postJson('/api/v1/products/search', ['query' => '']);
+
+        $response->assertOk()->assertJsonCount(1, 'data');
+        $this->assertSame($inStock->id, $response->json('data.0.id'));
+    }
+
     public function test_search_filters_by_destination_and_max_price_resolved_by_ai(): void
     {
         $colombo = Destination::factory()->create(['name' => 'Colombo']);
