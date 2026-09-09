@@ -16,6 +16,8 @@ readonly class ProductSearchCriteria
         public ?float $maxPrice = null,
         public ?ProductStatus $status = null,
         public bool $onlyValid = true,
+        public ?int $userId = null,
+        public int $page = 1,
         public int $perPage = 15,
     ) {}
 }

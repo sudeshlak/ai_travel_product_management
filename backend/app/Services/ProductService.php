@@ -19,26 +19,29 @@ class ProductService
      */
     public function list(ProductSearchCriteria $criteria): LengthAwarePaginator
     {
-        // TODO: implement
+        return $this->products->paginate($criteria);
     }
 
     public function find(int $id): Product
     {
-        // TODO: implement
+        return $this->products->findOrFail($id);
     }
 
     public function create(ProductData $data): Product
     {
         // TODO: implement
+        throw new \BadMethodCallException('Not implemented');
     }
 
     public function update(int $id, ProductData $data): Product
     {
         // TODO: implement
+        throw new \BadMethodCallException('Not implemented');
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $userId): void
     {
-        // TODO: implement
+        $product = $this->products->findOwnedOrFail($id, $userId);
+        $this->products->delete($product);
     }
 }
