@@ -35,10 +35,16 @@ class ProductController extends Controller
         return ProductResource::collection($paginator);
     }
 
-    public function store(StoreProductRequest $request): ProductResource
+    public function store(StoreProductRequest $request): JsonResponse
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        $product = $this->products->create(
+            $this->productDataFromRequest($request),
+            $request->user()->id,
+        );
+
+        return (new ProductResource($product->load(['category', 'destinations'])))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(int $product): ProductResource
@@ -49,25 +55,9 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, int $product): ProductResource
     {
-        /** @var list<int> $destinationIds */
-        $destinationIds = array_map(
-            static fn (mixed $id): int => (int) $id,
-            $request->validated('destination_ids'),
-        );
-
         $updated = $this->products->update(
             $product,
-            new ProductData(
-                productName: $request->string('product_name')->toString(),
-                categoryId: $request->integer('category_id'),
-                description: $request->string('description')->toString(),
-                price: (float) $request->input('price'),
-                inventoryCount: $request->integer('inventory_count'),
-                validFrom: Carbon::parse($request->input('valid_from'))->startOfDay(),
-                validUntil: Carbon::parse($request->input('valid_until'))->startOfDay(),
-                status: ProductStatus::from($request->string('status')->toString()),
-                destinationIds: $destinationIds,
-            ),
+            $this->productDataFromRequest($request),
             $request->user()->id,
         );
 
@@ -79,5 +69,26 @@ class ProductController extends Controller
         $this->products->delete($product, $request->user()->id);
 
         return response()->json(null, 204);
+    }
+
+    private function productDataFromRequest(StoreProductRequest|UpdateProductRequest $request): ProductData
+    {
+        /** @var list<int> $destinationIds */
+        $destinationIds = array_map(
+            static fn (mixed $id): int => (int) $id,
+            $request->validated('destination_ids'),
+        );
+
+        return new ProductData(
+            productName: $request->string('product_name')->toString(),
+            categoryId: $request->integer('category_id'),
+            description: $request->string('description')->toString(),
+            price: (float) $request->input('price'),
+            inventoryCount: $request->integer('inventory_count'),
+            validFrom: Carbon::parse($request->input('valid_from'))->startOfDay(),
+            validUntil: Carbon::parse($request->input('valid_until'))->startOfDay(),
+            status: ProductStatus::from($request->string('status')->toString()),
+            destinationIds: $destinationIds,
+        );
     }
 }

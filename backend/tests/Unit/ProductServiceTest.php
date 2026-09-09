@@ -102,4 +102,30 @@ class ProductServiceTest extends TestCase
 
         $this->assertSame($updated, $this->service->update(9, $data, 4));
     }
+
+    public function test_create_forwards_data_and_user_id_to_repository(): void
+    {
+        $data = new ProductData(
+            productName: 'Created',
+            categoryId: 1,
+            description: 'New product',
+            price: 99.0,
+            inventoryCount: 3,
+            validFrom: Carbon::parse('2026-01-01'),
+            validUntil: Carbon::parse('2026-12-31'),
+            status: ProductStatus::Active,
+            destinationIds: [2],
+        );
+
+        $created = new Product;
+        $created->id = 21;
+
+        $this->products
+            ->shouldReceive('create')
+            ->once()
+            ->with($data, 5)
+            ->andReturn($created);
+
+        $this->assertSame($created, $this->service->create($data, 5));
+    }
 }

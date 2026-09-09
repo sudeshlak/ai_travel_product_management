@@ -18,7 +18,7 @@ interface ProductRepositoryInterface
 
     public function findOwnedOrFail(int $id, int $userId): Product;
 
-    public function create(ProductData $data): Product;
+    public function create(ProductData $data, int $userId): Product;
 
     public function update(Product $product, ProductData $data): Product;
 

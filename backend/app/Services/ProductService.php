@@ -27,10 +27,9 @@ class ProductService
         return $this->products->findOrFail($id);
     }
 
-    public function create(ProductData $data): Product
+    public function create(ProductData $data, int $userId): Product
     {
-        // TODO: implement
-        throw new \BadMethodCallException('Not implemented');
+        return $this->products->create($data, $userId);
     }
 
     public function update(int $id, ProductData $data, int $userId): Product

@@ -243,4 +243,89 @@ class ProductControllerTest extends TestCase
             'product_name' => 'Other Product',
         ]);
     }
+
+    public function test_products_store_requires_authentication(): void
+    {
+        $this->postJson('/api/v1/products', [])->assertUnauthorized();
+    }
+
+    public function test_store_creates_product_for_authenticated_user(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $category = Category::factory()->create(['name' => 'Adventure']);
+        $destinationA = Destination::factory()->create(['name' => 'Colombo']);
+        $destinationB = Destination::factory()->create(['name' => 'Galle']);
+
+        Sanctum::actingAs($owner);
+
+        $response = $this->postJson('/api/v1/products', [
+            'product_name' => 'New Tour',
+            'category_id' => $category->id,
+            'description' => 'A great tour',
+            'price' => 150.5,
+            'inventory_count' => 8,
+            'valid_from' => '2026-03-01',
+            'valid_until' => '2026-09-30',
+            'status' => 'Active',
+            'destination_ids' => [$destinationA->id, $destinationB->id],
+            'user_id' => $other->id,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.product_name', 'New Tour')
+            ->assertJsonPath('data.description', 'A great tour')
+            ->assertJsonPath('data.price', '150.50')
+            ->assertJsonPath('data.inventory_count', 8)
+            ->assertJsonPath('data.valid_from', '2026-03-01')
+            ->assertJsonPath('data.valid_until', '2026-09-30')
+            ->assertJsonPath('data.status', 'Active')
+            ->assertJsonPath('data.category.id', $category->id)
+            ->assertJsonPath('data.category.name', 'Adventure')
+            ->assertJsonCount(2, 'data.destinations');
+
+        $productId = $response->json('data.id');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $productId,
+            'user_id' => $owner->id,
+            'product_name' => 'New Tour',
+            'category_id' => $category->id,
+            'description' => 'A great tour',
+            'status' => 'Active',
+        ]);
+
+        $this->assertDatabaseHas('destination_product', [
+            'product_id' => $productId,
+            'destination_id' => $destinationA->id,
+        ]);
+        $this->assertDatabaseHas('destination_product', [
+            'product_id' => $productId,
+            'destination_id' => $destinationB->id,
+        ]);
+    }
+
+    public function test_store_validation_failure_returns_422(): void
+    {
+        $owner = User::factory()->create();
+
+        Sanctum::actingAs($owner);
+
+        $this->postJson('/api/v1/products', [
+            'product_name' => '',
+            'valid_from' => '2026-12-31',
+            'valid_until' => '2026-01-01',
+            'destination_ids' => [],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'product_name',
+                'category_id',
+                'description',
+                'price',
+                'inventory_count',
+                'valid_until',
+                'status',
+                'destination_ids',
+            ]);
+    }
 }
