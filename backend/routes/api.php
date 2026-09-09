@@ -10,6 +10,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
-        Route::apiResource('products', ProductController::class);
+        Route::get('products', [ProductController::class, 'index']);
+        Route::delete('products/{product}', [ProductController::class, 'destroy']);
     });
 });
