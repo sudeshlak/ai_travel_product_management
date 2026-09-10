@@ -64,7 +64,20 @@ App URLs:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
 
-Use credentials to login
+Use credentials to login application
 - username : test@test.com
 - password : testpassword
+
+EER diagram can find in
+- /backend/docs/er/er.mmd
+
+Api doc can find in
+- /backend/docs/openapi.yaml
+
+.cursor/rules
+- Instructions for coding and planning agent
+
+.cursor/plans
+- Planing docs used to build application
+
 
