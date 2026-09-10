@@ -1,10 +1,17 @@
 import { client } from '@/api/client'
 import { mapAxiosError } from '@/api/mapAxiosError'
+import type { GenerateDescriptionResponse } from '@/api/responses/generateDescriptionResponse'
 import type {
   ProductListResponse,
   ProductResponse,
 } from '@/api/responses/productResponse'
 import type { CreateProductPayload } from '@/types/ProductFormValues'
+
+export type GenerateProductDescriptionPayload = {
+  description: string
+  product_name?: string | null
+  category?: string | null
+}
 
 export type ListProductsParams = {
   page: number
@@ -100,6 +107,20 @@ export async function updateProduct(
 export async function deleteProduct(id: number): Promise<void> {
   try {
     await client.delete(`/v1/products/${id}`)
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
+export async function generateProductDescription(
+  payload: GenerateProductDescriptionPayload,
+): Promise<GenerateDescriptionResponse> {
+  try {
+    const { data } = await client.post<GenerateDescriptionResponse>(
+      '/v1/products/generate-description',
+      payload,
+    )
+    return data
   } catch (error) {
     mapAxiosError(error)
   }
