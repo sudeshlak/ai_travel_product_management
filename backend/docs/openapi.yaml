@@ -185,6 +185,42 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /products/generate-description:
+    post:
+      tags: [Products]
+      summary: Polish product description with AI
+      description: >
+        Authenticated endpoint that rewrites a natural-language product description
+        into clearer, grammatically correct copy. Optional product name and category
+        are used as context only. Description must contain at least 4 words and at
+        most 2000 characters.
+      operationId: generateProductDescription
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateProductDescriptionRequest'
+      responses:
+        '200':
+          description: Polished description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedDescriptionData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '502':
+          description: Upstream AI provider failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
   /products/{product}:
     parameters:
       - $ref: '#/components/parameters/ProductId'
@@ -490,6 +526,39 @@ components:
           type: integer
           minimum: 1
           maximum: 100
+
+    GenerateProductDescriptionRequest:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Natural-language draft with at least 4 words
+        product_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        category:
+          type: string
+          nullable: true
+          maxLength: 100
+
+    GeneratedDescription:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
+          maxLength: 2000
+
+    GeneratedDescriptionData:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/GeneratedDescription'
 
     PaginationLinks:
       type: object

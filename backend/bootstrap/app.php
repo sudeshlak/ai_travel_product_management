@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\IntegrationException;
 use App\Exceptions\InvalidCredentialsException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +26,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (InvalidCredentialsException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => $e->getMessage()], Response::HTTP_UNAUTHORIZED);
+            }
+        });
+
+        $exceptions->render(function (IntegrationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(
+                    ['message' => 'Unable to generate description. Please try again.'],
+                    Response::HTTP_BAD_GATEWAY,
+                );
             }
         });
     })->create();
