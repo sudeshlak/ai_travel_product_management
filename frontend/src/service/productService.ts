@@ -1,6 +1,7 @@
 import {
   createProduct as createProductEndpoint,
   deleteProduct as deleteProductEndpoint,
+  generateProductDescription as generateProductDescriptionEndpoint,
   getProduct as getProductEndpoint,
   listProducts as listProductsEndpoint,
   searchProducts as searchProductsEndpoint,
@@ -77,4 +78,21 @@ export async function updateProduct(
 
 export async function deleteProduct(id: number): Promise<void> {
   await deleteProductEndpoint(id)
+}
+
+export type GenerateProductDescriptionInput = {
+  description: string
+  productName?: string
+  category?: string
+}
+
+export async function generateProductDescription(
+  input: GenerateProductDescriptionInput,
+): Promise<{ description: string }> {
+  const response = await generateProductDescriptionEndpoint({
+    description: input.description.trim(),
+    product_name: input.productName?.trim() || null,
+    category: input.category?.trim() || null,
+  })
+  return { description: response.data.description }
 }
