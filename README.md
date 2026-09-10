@@ -78,6 +78,6 @@ Api doc can find in
 - Instructions for coding and planning agent
 
 .cursor/plans
-- Planing docs used to build application
+- Planing docs used to develop application
 
 
