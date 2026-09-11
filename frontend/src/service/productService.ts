@@ -1,15 +1,17 @@
 import {
   createProduct as createProductEndpoint,
   deleteProduct as deleteProductEndpoint,
-  generateProductDescription as generateProductDescriptionEndpoint,
+  generateProduct as generateProductEndpoint,
   getProduct as getProductEndpoint,
   getProductSummary as getProductSummaryEndpoint,
   listProducts as listProductsEndpoint,
   searchProducts as searchProductsEndpoint,
   updateProduct as updateProductEndpoint,
 } from '@/api/endpoints/productEndpoints'
+import { mapGeneratedProduct } from '@/service/mappers/generatedProductMapper'
 import { mapProduct, mapProductList } from '@/service/mappers/productMapper'
 import { mapProductSummary } from '@/service/mappers/productSummaryMapper'
+import type { GeneratedProduct } from '@/types/GeneratedProduct'
 import type { Product, ProductListPage } from '@/types/Product'
 import type {
   CreateProductPayload,
@@ -83,21 +85,9 @@ export async function deleteProduct(id: number): Promise<void> {
   await deleteProductEndpoint(id)
 }
 
-export type GenerateProductDescriptionInput = {
-  description: string
-  productName?: string
-  category?: string
-}
-
-export async function generateProductDescription(
-  input: GenerateProductDescriptionInput,
-): Promise<{ description: string }> {
-  const response = await generateProductDescriptionEndpoint({
-    description: input.description.trim(),
-    product_name: input.productName?.trim() || null,
-    category: input.category?.trim() || null,
-  })
-  return { description: response.data.description }
+export async function generateProduct(prompt: string): Promise<GeneratedProduct> {
+  const response = await generateProductEndpoint({ prompt: prompt.trim() })
+  return mapGeneratedProduct(response)
 }
 
 export async function getProductSummary(): Promise<ProductSummary> {

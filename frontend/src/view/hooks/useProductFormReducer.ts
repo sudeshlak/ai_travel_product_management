@@ -9,6 +9,7 @@ export type ProductFormState = {
 
 export type ProductFormAction =
   | { type: 'setField'; field: keyof ProductFormValues; value: ProductFormValues[keyof ProductFormValues] }
+  | { type: 'patchFields'; fields: Partial<ProductFormValues> }
   | { type: 'toggleDestination'; destinationId: number }
   | { type: 'setErrors'; errors: Record<string, string> }
   | { type: 'setValues'; values: ProductFormValues }
@@ -31,6 +32,20 @@ function productFormReducer(
           [action.field]: '',
         },
       }
+    case 'patchFields': {
+      const errors = { ...state.errors }
+      for (const field of Object.keys(action.fields) as Array<keyof ProductFormValues>) {
+        errors[field] = ''
+      }
+      return {
+        ...state,
+        values: {
+          ...state.values,
+          ...action.fields,
+        },
+        errors,
+      }
+    }
     case 'toggleDestination': {
       const selected = state.values.destinationIds.includes(action.destinationId)
       const destinationIds = selected
