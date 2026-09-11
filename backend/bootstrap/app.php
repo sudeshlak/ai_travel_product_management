@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (IntegrationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(
-                    ['message' => 'Unable to generate description. Please try again.'],
+                    ['message' => 'Unable to generate product. Please try again.'],
                     Response::HTTP_BAD_GATEWAY,
                 );
             }
