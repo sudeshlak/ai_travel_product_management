@@ -96,6 +96,7 @@ function CreateProductPage() {
                 busy={createMutation.isPending}
                 serverErrors={serverErrors}
                 submitLabel="Create product"
+                showAiPrompt
                 onSubmit={handleSubmit}
               />
             ) : null}

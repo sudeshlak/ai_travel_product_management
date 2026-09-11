@@ -7,14 +7,15 @@ import {
 import type { ProductCategory, ProductDestination } from '@/types/Product'
 import type { ProductFormValues } from '@/types/ProductFormValues'
 import { emptyProductFormValues } from '@/types/ProductFormValues'
-import { validateProductForm } from '@/service/rules/productFormRules'
+import { DESCRIPTION_MAX_LENGTH } from '@/service/rules/descriptionAiRules'
 import {
-  canUseDescriptionAi,
-  DESCRIPTION_MAX_LENGTH,
-} from '@/service/rules/descriptionAiRules'
-import AiSparkleIcon from '@/view/components/ui/AiSparkleIcon'
+  canUseProductAiPrompt,
+  PRODUCT_AI_PROMPT_MAX_LENGTH,
+} from '@/service/rules/productAiPromptRules'
+import { validateProductForm } from '@/service/rules/productFormRules'
+import ProductAiPromptBar from '@/view/components/products/ProductAiPromptBar'
 import FormField from '@/view/components/ui/FormField'
-import { useGenerateDescriptionMutation } from '@/view/hooks/useGenerateDescriptionMutation'
+import { useGenerateProductMutation } from '@/view/hooks/useGenerateProductMutation'
 import { useProductFormReducer } from '@/view/hooks/useProductFormReducer'
 import './ProductForm.scss'
 
@@ -25,6 +26,7 @@ type ProductFormProps = {
   busy?: boolean
   serverErrors?: Record<string, string>
   submitLabel?: string
+  showAiPrompt?: boolean
   onSubmit: (values: ProductFormValues) => void | Promise<void>
 }
 
@@ -35,10 +37,12 @@ function ProductForm({
   busy = false,
   serverErrors,
   submitLabel = 'Save product',
+  showAiPrompt = false,
   onSubmit,
 }: ProductFormProps) {
   const [state, dispatch] = useProductFormReducer(initialValues)
-  const generateMutation = useGenerateDescriptionMutation()
+  const generateMutation = useGenerateProductMutation()
+  const [prompt, setPrompt] = useState('')
   const [aiError, setAiError] = useState<string | undefined>()
 
   useEffect(() => {
@@ -48,9 +52,9 @@ function ProductForm({
   }, [serverErrors, dispatch])
 
   const { values, errors } = state
-  const generating = generateMutation.isPending
+  const generating = showAiPrompt && generateMutation.isPending
   const fieldsDisabled = busy || generating
-  const aiEnabled = canUseDescriptionAi(values.description) && !fieldsDisabled
+  const promptEnabled = canUseProductAiPrompt(prompt) && !fieldsDisabled
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -64,43 +68,37 @@ function ProductForm({
     await onSubmit(state.values)
   }
 
-  async function handleImproveDescription() {
+  async function handleGenerateProduct() {
     setAiError(undefined)
 
-    if (values.description.length > DESCRIPTION_MAX_LENGTH) {
-      dispatch({
-        type: 'setErrors',
-        errors: {
-          ...errors,
-          description: `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer.`,
-        },
-      })
+    if (!canUseProductAiPrompt(prompt)) {
+      setAiError('Enter at least 4 words to generate a product with AI.')
       return
     }
-
-    if (!canUseDescriptionAi(values.description)) {
-      setAiError('Enter at least 4 words to improve the description with AI.')
-      return
-    }
-
-    const selectedCategory = categories.find(
-      (category) => String(category.id) === values.categoryId,
-    )
 
     try {
-      const result = await generateMutation.mutateAsync({
-        description: values.description,
-        productName: values.productName.trim() || undefined,
-        category: selectedCategory?.name,
-      })
+      const result = await generateMutation.mutateAsync(prompt)
+      const matchedCategory = categories.some(
+        (category) => category.id === result.categoryId,
+      )
       dispatch({
-        type: 'setField',
-        field: 'description',
-        value: result.description.slice(0, DESCRIPTION_MAX_LENGTH),
+        type: 'patchFields',
+        fields: {
+          productName: result.productName,
+          description: result.description.slice(0, DESCRIPTION_MAX_LENGTH),
+          categoryId: matchedCategory ? String(result.categoryId) : '',
+        },
       })
+      if (!matchedCategory) {
+        setAiError('Could not match a category. Please choose one.')
+      }
     } catch (error) {
       if (error instanceof ValidationError) {
-        setAiError(error.fields.description ?? Object.values(error.fields)[0] ?? 'Could not improve the description.')
+        setAiError(
+          error.fields.prompt ??
+            Object.values(error.fields)[0] ??
+            'Could not generate the product.',
+        )
         return
       }
       if (error instanceof UnauthorizedError) {
@@ -111,16 +109,30 @@ function ProductForm({
         setAiError('Unable to connect. Check your network and try again.')
         return
       }
-      setAiError('Could not improve the description. Please try again.')
+      setAiError('Could not generate the product. Please try again.')
     }
   }
 
-  const aiButtonTitle = aiEnabled
-    ? 'Improve description with AI'
-    : 'Enter at least 4 words to use AI'
-
   return (
     <form className="product-form" onSubmit={handleSubmit} noValidate>
+      {showAiPrompt ? (
+        <ProductAiPromptBar
+          value={prompt}
+          disabled={fieldsDisabled}
+          busy={generating}
+          enabled={promptEnabled}
+          error={aiError}
+          maxLength={PRODUCT_AI_PROMPT_MAX_LENGTH}
+          onChange={(value) => {
+            setAiError(undefined)
+            setPrompt(value)
+          }}
+          onGenerate={() => {
+            void handleGenerateProduct()
+          }}
+        />
+      ) : null}
+
       <FormField id="productName" label="Product name" error={errors.productName}>
         <input
           id="productName"
@@ -205,41 +217,19 @@ function ProductForm({
           maxLength={DESCRIPTION_MAX_LENGTH}
           value={values.description}
           disabled={fieldsDisabled}
-          onChange={(event) => {
-            setAiError(undefined)
+          onChange={(event) =>
             dispatch({
               type: 'setField',
               field: 'description',
               value: event.target.value,
             })
-          }}
+          }
         />
-        <div className="product-form__description-tools d-flex align-items-center justify-content-between gap-2 mt-2">
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-secondary product-form__ai-btn"
-            disabled={!aiEnabled}
-            aria-label={aiButtonTitle}
-            title={aiButtonTitle}
-            aria-busy={generating}
-            onClick={() => {
-              void handleImproveDescription()
-            }}
-          >
-            <AiSparkleIcon size={16} />
-            <span className="product-form__ai-btn-label">
-              {generating ? 'Improving…' : 'Improve with AI'}
-            </span>
-          </button>
+        <div className="d-flex justify-content-end mt-2">
           <span className="text-secondary small">
             {values.description.length} / {DESCRIPTION_MAX_LENGTH}
           </span>
         </div>
-        {aiError ? (
-          <div className="invalid-feedback d-block" role="alert">
-            {aiError}
-          </div>
-        ) : null}
       </FormField>
 
       <div className="row">

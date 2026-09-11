@@ -205,16 +205,17 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
-  /products/generate-description:
+  /products/generate:
     post:
       tags: [Products]
-      summary: Polish product description with AI
+      summary: Generate product fields with AI
       description: >
-        Authenticated endpoint that rewrites a natural-language product description
-        into clearer, grammatically correct copy. Optional product name and category
-        are used as context only. Description must contain at least 4 words and at
+        Authenticated endpoint that turns a natural-language product prompt into
+        a product name, description, and suggested category. The description
+        embeds Highlights, Inclusions, and Tags in the prose. Category must be
+        one already in the catalog. Prompt must contain at least 4 words and at
         most 2000 characters.
-      operationId: generateProductDescription
+      operationId: generateProduct
       security:
         - sanctum: []
       requestBody:
@@ -222,14 +223,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenerateProductDescriptionRequest'
+              $ref: '#/components/schemas/GenerateProductRequest'
       responses:
         '200':
-          description: Polished description
+          description: Generated product fields
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeneratedDescriptionData'
+                $ref: '#/components/schemas/GeneratedProductData'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '422':
@@ -547,38 +548,35 @@ components:
           minimum: 1
           maximum: 100
 
-    GenerateProductDescriptionRequest:
+    GenerateProductRequest:
       type: object
-      required: [description]
+      required: [prompt]
       properties:
-        description:
+        prompt:
           type: string
           minLength: 1
           maxLength: 2000
-          description: Natural-language draft with at least 4 words
+          description: Natural-language product description with at least 4 words
+
+    GeneratedProduct:
+      type: object
+      required: [product_name, description, category_id]
+      properties:
         product_name:
           type: string
-          nullable: true
           maxLength: 255
-        category:
-          type: string
-          nullable: true
-          maxLength: 100
-
-    GeneratedDescription:
-      type: object
-      required: [description]
-      properties:
         description:
           type: string
           maxLength: 2000
+        category_id:
+          type: integer
 
-    GeneratedDescriptionData:
+    GeneratedProductData:
       type: object
       required: [data]
       properties:
         data:
-          $ref: '#/components/schemas/GeneratedDescription'
+          $ref: '#/components/schemas/GeneratedProduct'
 
     ProductSummary:
       type: object
