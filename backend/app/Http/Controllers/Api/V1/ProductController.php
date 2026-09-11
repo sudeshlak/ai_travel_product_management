@@ -14,6 +14,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\GeneratedDescriptionResource;
 use App\Http\Resources\ProductResource;
+use App\Http\Resources\ProductSummaryResource;
 use App\Services\ProductDescriptionService;
 use App\Services\ProductSearchService;
 use App\Services\ProductService;
@@ -41,6 +42,13 @@ class ProductController extends Controller
         ));
 
         return ProductResource::collection($paginator);
+    }
+
+    public function summary(Request $request): ProductSummaryResource
+    {
+        return new ProductSummaryResource(
+            $this->products->summary($request->user()->id),
+        );
     }
 
     public function search(SearchProductRequest $request): AnonymousResourceCollection

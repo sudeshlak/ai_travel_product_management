@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as productService from '@/service/productService'
 import type { ProductFormValues } from '@/types/ProductFormValues'
 import { productsQueryKey } from '@/view/hooks/useProductsQuery'
+import { productSummaryQueryKey } from '@/view/hooks/useProductSummaryQuery'
 
 export function useCreateProductMutation() {
   const queryClient = useQueryClient()
@@ -9,7 +10,10 @@ export function useCreateProductMutation() {
   return useMutation({
     mutationFn: (values: ProductFormValues) => productService.createProduct(values),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: productsQueryKey })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: productsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: productSummaryQueryKey }),
+      ])
     },
   })
 }
