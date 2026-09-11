@@ -8,10 +8,12 @@ import {
 import type { Product } from '@/types/Product'
 import AppHeader from '@/view/components/layout/AppHeader'
 import ConfirmDialog from '@/view/components/feedback/ConfirmDialog'
+import ProductSummaryStats from '@/view/components/products/ProductSummaryStats'
 import ProductsTable from '@/view/components/products/ProductsTable'
 import { withAuth } from '@/view/hoc/withAuth'
 import { useDeleteProductMutation } from '@/view/hooks/useDeleteProductMutation'
 import { useProductsQuery } from '@/view/hooks/useProductsQuery'
+import { useProductSummaryQuery } from '@/view/hooks/useProductSummaryQuery'
 import './ProductsPage.scss'
 
 function ProductsPage() {
@@ -20,6 +22,7 @@ function ProductsPage() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
 
   const { data, isLoading, isFetching, error, isError } = useProductsQuery(page)
+  const summaryQuery = useProductSummaryQuery()
   const deleteMutation = useDeleteProductMutation()
 
   async function handleConfirmDelete() {
@@ -51,6 +54,17 @@ function ProductsPage() {
     }
   }
 
+  let summaryErrorMessage: string | undefined
+  if (summaryQuery.isError) {
+    if (summaryQuery.error instanceof UnauthorizedError) {
+      summaryErrorMessage = 'Your session expired. Please sign in again.'
+    } else if (summaryQuery.error instanceof ConnectionError) {
+      summaryErrorMessage = 'Unable to connect. Check your network and try again.'
+    } else {
+      summaryErrorMessage = 'Something went wrong loading product summary.'
+    }
+  }
+
   let deleteErrorMessage: string | undefined
   if (deleteMutation.isError) {
     if (deleteMutation.error instanceof ConnectionError) {
@@ -72,10 +86,26 @@ function ProductsPage() {
       <main className="container pb-4">
         <div className="row mb-3">
           <div className="col-12">
-            <h1 className="h3 mb-1">Your products</h1>
-            <p className="text-secondary mb-0">Manage the travel products you own.</p>
+            <h1 className="h3 mb-1">Product dashboard</h1>
+            <p className="text-secondary mb-0">Overview of the travel products you own.</p>
           </div>
         </div>
+
+        {summaryErrorMessage ? (
+          <div className="alert alert-danger" role="alert">
+            {summaryErrorMessage}
+          </div>
+        ) : null}
+
+        {summaryQuery.isLoading ? (
+          <p className="text-secondary mb-4">Loading summary…</p>
+        ) : summaryQuery.data ? (
+          <ProductSummaryStats
+            totalProducts={summaryQuery.data.totalProducts}
+            activeProducts={summaryQuery.data.activeProducts}
+            expiredProducts={summaryQuery.data.expiredProducts}
+          />
+        ) : null}
 
         {listErrorMessage ? (
           <div className="alert alert-danger" role="alert">

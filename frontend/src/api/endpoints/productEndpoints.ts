@@ -5,6 +5,7 @@ import type {
   ProductListResponse,
   ProductResponse,
 } from '@/api/responses/productResponse'
+import type { ProductSummaryResponse } from '@/api/responses/productSummaryResponse'
 import type { CreateProductPayload } from '@/types/ProductFormValues'
 
 export type GenerateProductDescriptionPayload = {
@@ -120,6 +121,15 @@ export async function generateProductDescription(
       '/v1/products/generate-description',
       payload,
     )
+    return data
+  } catch (error) {
+    mapAxiosError(error)
+  }
+}
+
+export async function getProductSummary(): Promise<ProductSummaryResponse> {
+  try {
+    const { data } = await client.get<ProductSummaryResponse>('/v1/products/summary')
     return data
   } catch (error) {
     mapAxiosError(error)

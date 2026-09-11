@@ -3,16 +3,19 @@ import {
   deleteProduct as deleteProductEndpoint,
   generateProductDescription as generateProductDescriptionEndpoint,
   getProduct as getProductEndpoint,
+  getProductSummary as getProductSummaryEndpoint,
   listProducts as listProductsEndpoint,
   searchProducts as searchProductsEndpoint,
   updateProduct as updateProductEndpoint,
 } from '@/api/endpoints/productEndpoints'
 import { mapProduct, mapProductList } from '@/service/mappers/productMapper'
+import { mapProductSummary } from '@/service/mappers/productSummaryMapper'
 import type { Product, ProductListPage } from '@/types/Product'
 import type {
   CreateProductPayload,
   ProductFormValues,
 } from '@/types/ProductFormValues'
+import type { ProductSummary } from '@/types/ProductSummary'
 
 export type ListProductsInput = {
   page: number
@@ -95,4 +98,9 @@ export async function generateProductDescription(
     category: input.category?.trim() || null,
   })
   return { description: response.data.description }
+}
+
+export async function getProductSummary(): Promise<ProductSummary> {
+  const response = await getProductSummaryEndpoint()
+  return mapProductSummary(response)
 }
