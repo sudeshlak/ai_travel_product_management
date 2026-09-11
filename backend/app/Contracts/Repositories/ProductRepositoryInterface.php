@@ -4,6 +4,7 @@ namespace App\Contracts\Repositories;
 
 use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
+use App\DataTransferObjects\ProductSummary;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -23,4 +24,6 @@ interface ProductRepositoryInterface
     public function update(Product $product, ProductData $data): Product;
 
     public function delete(Product $product): void;
+
+    public function summarizeForUser(int $userId): ProductSummary;
 }

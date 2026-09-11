@@ -5,6 +5,8 @@ namespace App\Repositories\Eloquent;
 use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
+use App\DataTransferObjects\ProductSummary;
+use App\Enums\ProductStatus;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -126,5 +128,24 @@ class EloquentProductRepository implements ProductRepositoryInterface
     public function delete(Product $product): void
     {
         $product->delete();
+    }
+
+    public function summarizeForUser(int $userId): ProductSummary
+    {
+        $today = now()->toDateString();
+        $active = ProductStatus::Active->value;
+
+        $row = Product::query()
+            ->where('user_id', $userId)
+            ->selectRaw('COUNT(*) as total_products')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active_products', [$active])
+            ->selectRaw('SUM(CASE WHEN DATE(valid_until) < ? THEN 1 ELSE 0 END) as expired_products', [$today])
+            ->first();
+
+        return new ProductSummary(
+            totalProducts: (int) ($row?->total_products ?? 0),
+            activeProducts: (int) ($row?->active_products ?? 0),
+            expiredProducts: (int) ($row?->expired_products ?? 0),
+        );
     }
 }

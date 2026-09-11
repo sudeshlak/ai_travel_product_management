@@ -3,6 +3,7 @@ import * as productService from '@/service/productService'
 import type { ProductFormValues } from '@/types/ProductFormValues'
 import { productQueryKey } from '@/view/hooks/useProductQuery'
 import { productsQueryKey } from '@/view/hooks/useProductsQuery'
+import { productSummaryQueryKey } from '@/view/hooks/useProductSummaryQuery'
 
 export type UpdateProductInput = {
   id: number
@@ -19,6 +20,7 @@ export function useUpdateProductMutation() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
         queryClient.invalidateQueries({ queryKey: productQueryKey(variables.id) }),
+        queryClient.invalidateQueries({ queryKey: productSummaryQueryKey }),
       ])
     },
   })

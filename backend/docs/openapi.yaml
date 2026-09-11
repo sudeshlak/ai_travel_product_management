@@ -160,6 +160,26 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /products/summary:
+    get:
+      tags: [Products]
+      summary: Owned product summary counts
+      description: >
+        Returns aggregate counts for the authenticated user's products:
+        total, Active status, and expired (valid_until before today).
+      operationId: getProductSummary
+      security:
+        - sanctum: []
+      responses:
+        '200':
+          description: Product summary counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSummaryData'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
   /products/search:
     post:
       tags: [Products]
@@ -559,6 +579,27 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/GeneratedDescription'
+
+    ProductSummary:
+      type: object
+      required: [total_products, active_products, expired_products]
+      properties:
+        total_products:
+          type: integer
+          minimum: 0
+        active_products:
+          type: integer
+          minimum: 0
+        expired_products:
+          type: integer
+          minimum: 0
+
+    ProductSummaryData:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ProductSummary'
 
     PaginationLinks:
       type: object
