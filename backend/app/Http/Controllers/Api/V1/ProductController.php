@@ -3,19 +3,18 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\DataTransferObjects\ProductData;
-use App\DataTransferObjects\ProductDescriptionPolishInput;
 use App\DataTransferObjects\ProductSearchCriteria;
 use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\GenerateProductDescriptionRequest;
+use App\Http\Requests\GenerateProductRequest;
 use App\Http\Requests\IndexProductRequest;
 use App\Http\Requests\SearchProductRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use App\Http\Resources\GeneratedDescriptionResource;
+use App\Http\Resources\GeneratedProductResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ProductSummaryResource;
-use App\Services\ProductDescriptionService;
+use App\Services\ProductGenerationService;
 use App\Services\ProductSearchService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +27,7 @@ class ProductController extends Controller
     public function __construct(
         private readonly ProductService $products,
         private readonly ProductSearchService $search,
-        private readonly ProductDescriptionService $descriptions,
+        private readonly ProductGenerationService $generation,
     ) {}
 
     public function index(IndexProductRequest $request): AnonymousResourceCollection
@@ -62,15 +61,11 @@ class ProductController extends Controller
         return ProductResource::collection($paginator);
     }
 
-    public function generateDescription(GenerateProductDescriptionRequest $request): GeneratedDescriptionResource
+    public function generate(GenerateProductRequest $request): GeneratedProductResource
     {
-        $description = $this->descriptions->generate(new ProductDescriptionPolishInput(
-            description: $request->string('description')->toString(),
-            productName: $this->nullableTrimmedString($request->input('product_name')),
-            category: $this->nullableTrimmedString($request->input('category')),
-        ));
-
-        return new GeneratedDescriptionResource($description);
+        return new GeneratedProductResource(
+            $this->generation->generate($request->string('prompt')->toString()),
+        );
     }
 
     public function store(StoreProductRequest $request): JsonResponse
@@ -129,16 +124,5 @@ class ProductController extends Controller
             status: ProductStatus::from($request->string('status')->toString()),
             destinationIds: $destinationIds,
         );
-    }
-
-    private function nullableTrimmedString(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $trimmed = trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
     }
 }
