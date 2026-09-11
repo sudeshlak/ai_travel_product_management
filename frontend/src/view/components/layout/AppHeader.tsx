@@ -14,7 +14,7 @@ type AppHeaderProps = {
 }
 
 const defaultPrimaryAction: AppHeaderPrimaryAction = {
-  label: 'Manage products',
+  label: 'Product dashboard',
   to: '/products',
 }
 
