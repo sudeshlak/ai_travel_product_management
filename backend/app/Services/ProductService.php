@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\DataTransferObjects\ProductData;
 use App\DataTransferObjects\ProductSearchCriteria;
+use App\DataTransferObjects\ProductSummary;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -43,5 +44,10 @@ class ProductService
     {
         $product = $this->products->findOwnedOrFail($id, $userId);
         $this->products->delete($product);
+    }
+
+    public function summary(int $userId): ProductSummary
+    {
+        return $this->products->summarizeForUser($userId);
     }
 }
